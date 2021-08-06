@@ -7,32 +7,13 @@ import time
 from flask_cors import CORS
 
 
-#functions
-# from util import get_stations
-# from util import get_stop_id
-# from util import get_weather_conditions
-# from util import get_weather_key
-# from mta import get_train_time
-# from util import all_stations
-
 from util import get_states, get_weather_conditions
 from util import get_cities
-from util import get_weather_info
+from util import post_weather_info
 
 app = Flask(__name__)
 CORS(app)
 
-#------------------------------------------weather conditions
-# @app.route('/train/<letter>', methods =["POST", "GET"])
-# @app.route('/weather/<weather_condition>', methods =["POST", "GET"])
-# def get_weather_conditions(weather):
-
-#     if request.method == "POST":
-#         all_conditions = get_weather_conditions().keys()
-
-#     if request.method == "GET":
-#         return ({"conditions": all_conditions})
-#     return ({"conditions": all_conditions})
 
 @app.route('/weatherlist')
 def get_weather_list():
@@ -44,8 +25,8 @@ def get_weather_list():
 
 
 @app.route('/weatherinfo')
-def get_weather_data():
-    data = get_weather_info()
+def post_weather_data():
+    data = post_weather_info()
 
     return data
     

@@ -5,8 +5,9 @@ import numpy as np
 import pandas as pd
 
 import time
-
+import json
 from requests import api
+import ast
 
 
 sheet_id = "1_Rxr-2jkJgWmmO6xLJJ61SHEXeRCUVIgv6cXXnvz438"
@@ -24,8 +25,8 @@ def get_key():
     return api_key
 
 
-def get_weather_conditions():
-
+def weather_conditions_codes():
+#one way I thought about getting the weather conditions thought the api query
     weather_conditions = {
     'Thunderstorm': ["200", "201", "202", "210", "211", "212", "221", "230", "231", "232"], 
     'Drizzle':["300", "301", "302", "310", "311", "312", "313", "314", "321"], 
@@ -50,7 +51,7 @@ def get_cities():
     return cities
 
 def get_states():
-
+#tried using this to filter api query but filtering by state didn't work. 
     states = []
 
     for i, state in df.iterrows():
@@ -59,23 +60,60 @@ def get_states():
     return states
 
 def get_weather_info():
-
-    time.sleep(5)
+    #save this to json tomorrow
+    cities = get_cities()
+    states = get_states()
 
     api_key = get_key()
-    country_code = "us"
-    state_code = ""
-    city_name = ""
+    country_code = "US"
 
-    if " " in state_code:
-        state_code.replace(" ", "%20") 
-    open_weather_url = f"http://api.openweathermap.org/data/2.5/weather?q={city_name},{state_code},{country_code}&units=imperial&appid={api_key}"
+    weather_data = {}
 
-    r = requests.get(open_weather_url)
-    
-    return r.content
+    # if " " in state_code:
+    #     state_code.replace(" ", "%20")
+    for i, city in enumerate(cities):
+        
+        open_weather_url = f"http://api.openweathermap.org/data/2.5/weather?q={cities[i]},{states[i]},{country_code}&units=imperial&appid={api_key}"
+        time.sleep(3)
+        r = requests.get(open_weather_url, stream=True)
+        r_data = str(r.content, 'UTF-8')
+        print(i,r_data)
+        city_state = f"{cities[i]},{states[i]}"
+        if city_state not in weather_data:
+            weather_data[city_state] = [r_data]
+
+    # weather_data.decode("utf-8")
+    # with open('/home/richarda/Projects/horizon_media_project/backend/weatherdata.json', 'w+') as f_obj:
+    #     json.dump(weather_data, f_obj, sort_keys = True,indent=4)
+    return weather_data
+
+def json_load_data():
+    with open('/home/richarda/Projects/horizon_media_project/backend/weatherdata.json', 'r') as f_obj:
+        data = json.load(f_obj)
+
+    return data
 
 
+def post_weather_info():
 
-if __name__ == "__main__":
-    app.run(debug=True)
+    data = json_load_data()
+    condition_data = []
+    condition = "Clear" #Drizzle, Rain Snow, Atmosphere, Clear, Clouds, Thunderstorm
+
+    for k, v in data.items():
+        res = ast.literal_eval(data[k][0])
+        # print(res)
+        try:
+            if condition == res["weather"][0]["main"]:
+                weather_report = res["main"]["temp"], res["wind"]["speed"]
+                condition_data.append({k:weather_report})
+        except:
+            pass
+
+    # return data['West Jordan,Utah'][0], type(data['West Jordan,Utah'][0])
+    # return res["weather"][0]["main"]
+    return condition_data
+
+
+# if __name__ == "__main__":
+#     app.run(debug=True)
